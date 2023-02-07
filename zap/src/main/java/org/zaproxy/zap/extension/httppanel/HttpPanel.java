@@ -27,6 +27,7 @@ import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.Serializable;
+import java.net.http.HttpRequest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -51,6 +52,7 @@ import org.apache.logging.log4j.Logger;
 import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.extension.AbstractPanel;
 import org.parosproxy.paros.extension.edit.ExtensionEdit;
+import org.parosproxy.paros.network.HttpMessage;
 import org.parosproxy.paros.view.FindDialog;
 import org.parosproxy.paros.view.View;
 import org.zaproxy.zap.extension.httppanel.component.HttpPanelComponentInterface;
@@ -110,6 +112,9 @@ public abstract class HttpPanel extends AbstractPanel {
     private JToolBar toolBarMoreOptions;
     private JPanel endAllOptions;
 
+    // POOH EDIT
+    private String keepIt = "";
+
     public HttpPanel(boolean isEditable, String configurationKey) {
         super();
 
@@ -117,13 +122,22 @@ public abstract class HttpPanel extends AbstractPanel {
         this.message = null;
 
         setConfigurationKey(configurationKey);
-
+        try {
+            System.out.println("configurationKey: "+ configurationKey);
+            if(configurationKey.indexOf("main") != -1) {
+                System.out.println("configurationKey: "+ configurationKey);
+                this.keepIt = "main";
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
         initialize();
         initUi();
         initSpecial();
     }
 
     protected abstract void initComponents();
+    protected  void initComponents2(String keepIt){};
 
     protected abstract void initSpecial();
 
@@ -183,6 +197,7 @@ public abstract class HttpPanel extends AbstractPanel {
         // getPanelContent().add(new EmptyComponent(), "");
 
         initComponents();
+        initComponents2(this.keepIt);
 
         setMessage(null);
     }
@@ -238,7 +253,7 @@ public abstract class HttpPanel extends AbstractPanel {
     public void setMessage(Message msg) {
         Message oldMessage = this.message;
         this.message = msg;
-
+        
         for (HttpPanelComponentInterface component : components.values()) {
             if (!component.isEnabled(message)) {
                 if (enabledComponents.contains(component)) {
@@ -267,6 +282,8 @@ public abstract class HttpPanel extends AbstractPanel {
         if (switchView) {
             switchComponent(enabledComponents.get(0).getName());
         } else {
+            
+           
             updateContent();
         }
         notifyDisplayedMessageChangedListeners(oldMessage, message);
@@ -336,12 +353,14 @@ public abstract class HttpPanel extends AbstractPanel {
     }
 
     public void setMessage(Message aMessage, boolean enableViewSelect) {
+       
         setMessage(aMessage);
         setEnableViewSelect(enableViewSelect);
     }
 
     public void updateContent() {
         if (currentComponent != null) {
+           
             currentComponent.setMessage(message);
         }
     }

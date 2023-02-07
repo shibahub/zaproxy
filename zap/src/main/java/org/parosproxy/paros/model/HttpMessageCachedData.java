@@ -38,6 +38,11 @@ public class HttpMessageCachedData {
     private boolean note;
     private WeakReference<String> wrRequestBody;
 
+
+    //////POOH EDIT
+    private final String requestHeader;
+    private final String requestBody;
+
     public HttpMessageCachedData(HttpMessage msg) {
         this.method = msg.getRequestHeader().getMethod();
         this.uri = msg.getRequestHeader().getURI();
@@ -51,6 +56,10 @@ public class HttpMessageCachedData {
         this.responseHeaderLength = msg.getResponseHeader().toString().length();
         this.responseBodyLength = msg.getResponseBody().length();
         this.wrRequestBody = new WeakReference<>(msg.getRequestBody().toString());
+
+        ///////POOH EDIT
+        this.requestHeader = msg.getRequestHeader().toString();
+        this.requestBody = msg.getRequestBody().toString();
     }
 
     public String getMethod() {
@@ -107,6 +116,10 @@ public class HttpMessageCachedData {
 
     public String getRequestBody() {
         return wrRequestBody.get();
+    }
+
+    public String getRequestHeader() {
+        return requestHeader;
     }
 
     public void setRequestBody(String requestBody) {

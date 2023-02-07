@@ -152,7 +152,6 @@ public class ManualHttpRequestEditorDialog
         if (aMessage == null) {
             return;
         }
-
         getRequestPanel().setMessage(aMessage);
         getResponsePanel().setMessage(aMessage);
         setFooterStatus(null);

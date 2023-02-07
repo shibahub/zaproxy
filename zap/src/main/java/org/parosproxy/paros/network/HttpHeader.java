@@ -64,7 +64,7 @@ public abstract class HttpHeader implements java.io.Serializable {
     private static final long serialVersionUID = 7922279497679304778L;
     public static final String CRLF = "\r\n";
     public static final String LF = "\n";
-    public static final String CONTENT_LENGTH = "content-length";
+    public static final String CONTENT_LENGTH = "Content-Length";
     public static final String TRANSFER_ENCODING = "transfer-encoding";
     public static final String CONTENT_ENCODING = "content-encoding";
     public static final String CONTENT_LOCATION = "content-location";

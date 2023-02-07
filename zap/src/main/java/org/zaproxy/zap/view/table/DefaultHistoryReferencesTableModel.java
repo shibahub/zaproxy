@@ -51,7 +51,9 @@ public class DefaultHistoryReferencesTableModel
                 Column.SIZE_RESPONSE_BODY,
                 Column.HIGHEST_ALERT,
                 Column.NOTE,
-                Column.TAGS
+                Column.TAGS,
+                Column.PARAMS,    //POOH EDIT
+                Column.EDITED, //POOH EDIT
             };
 
     public static Column[] getDefaultColumns() {

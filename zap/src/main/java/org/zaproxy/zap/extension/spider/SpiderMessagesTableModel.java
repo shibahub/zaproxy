@@ -63,7 +63,9 @@ class SpiderMessagesTableModel
                 Column.SIZE_RESPONSE_HEADER,
                 Column.SIZE_RESPONSE_BODY,
                 Column.HIGHEST_ALERT,
-                Column.TAGS
+                Column.TAGS,
+                Column.PARAMS,
+                Column.EDITED,
             };
 
     private static final String[] CUSTOM_COLUMN_NAMES = {

@@ -36,10 +36,8 @@ public class HttpPanelRequest extends HttpPanel {
     protected JComboBox<String> comboChangeMethod;
 
     private static final String REQUEST_KEY = "request.";
-
     public HttpPanelRequest(boolean isEditable, String configurationKey) {
         super(isEditable, configurationKey + REQUEST_KEY);
-
         HttpPanelManager.getInstance().addRequestPanel(this);
         this.setHideable(false);
     }
@@ -48,6 +46,11 @@ public class HttpPanelRequest extends HttpPanel {
     protected void initComponents() {
         addComponent(
                 new RequestSplitComponent<>(), Model.getSingleton().getOptionsParam().getConfig());
+    }
+    @Override
+    protected void initComponents2(String keepIt) {
+        addComponent(
+                new RequestSplitComponent<>(keepIt), Model.getSingleton().getOptionsParam().getConfig());
     }
 
     @Override

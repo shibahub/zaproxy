@@ -45,6 +45,9 @@ import org.apache.commons.configuration.FileConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.parosproxy.paros.Constant;
+import org.parosproxy.paros.network.HttpMalformedHeaderException;
+import org.parosproxy.paros.network.HttpMessage;
+import org.parosproxy.paros.network.HttpRequestHeader;
 import org.parosproxy.paros.view.View;
 import org.zaproxy.zap.extension.httppanel.HttpPanel;
 import org.zaproxy.zap.extension.httppanel.InvalidMessageDataException;
@@ -58,9 +61,9 @@ import org.zaproxy.zap.utils.SortedComboBoxModel;
 import org.zaproxy.zap.view.messagelocation.MessageLocationHighlight;
 import org.zaproxy.zap.view.messagelocation.MessageLocationHighlighter;
 
-public class HttpPanelComponentViewsManager implements ItemListener, MessageLocationHighlighter {
+public class HttpPanelViewsOriEdit implements ItemListener, MessageLocationHighlighter {
 
-    private static final Logger logger = LogManager.getLogger(HttpPanelComponentViewsManager.class);
+    private static final Logger logger = LogManager.getLogger(HttpPanelViewsOriEdit.class);
 
     private static final String VIEWS_KEY = "views";
     private static final String DEFAULT_VIEW_KEY = "defaultview";
@@ -98,8 +101,14 @@ public class HttpPanelComponentViewsManager implements ItemListener, MessageLoca
     private boolean changingComboBox;
 
     private HttpPanel owner;
+    private HttpRequestHeader temp;
+    public static HttpPanelComponentViewsManager bodyViews;
+    public static HttpPanelComponentViewsManager headerViews;
 
-    public HttpPanelComponentViewsManager(String configurationKey) {
+    private String requestBody;
+    private HttpRequestHeader requestHeader;
+
+    public HttpPanelViewsOriEdit(String configurationKey) {
         enabledViews = new ArrayList<>();
         viewItems = new HashMap<>();
         views = new HashMap<>();
@@ -121,19 +130,19 @@ public class HttpPanelComponentViewsManager implements ItemListener, MessageLoca
         panelViews = new JPanel(new CardLayout());
     }
 
-    public HttpPanelComponentViewsManager(String configurationKey, String label) {
+    public HttpPanelViewsOriEdit(String configurationKey, String label) {
         this(configurationKey);
-
+        
         comboBoxSelectView.setRenderer(
                 new CustomDelegateListCellRenderer(comboBoxSelectView, label));
     }
 
-    public HttpPanelComponentViewsManager(HttpPanel owner, String configurationKey) {
+    public HttpPanelViewsOriEdit(HttpPanel owner, String configurationKey) {
         this(configurationKey);
         this.owner = owner;
     }
 
-    public HttpPanelComponentViewsManager(HttpPanel owner, String configurationKey, String label) {
+    public HttpPanelViewsOriEdit(HttpPanel owner, String configurationKey, String label) {
         this(configurationKey, label);
         this.owner = owner;
     }
@@ -188,7 +197,7 @@ public class HttpPanelComponentViewsManager implements ItemListener, MessageLoca
             owner.fireMessageViewChangedEvent(previousView, currentView);
         }
     }
-
+    
     public void setMessage(Message aMessage) {
         this.message = aMessage;
 
@@ -208,7 +217,13 @@ public class HttpPanelComponentViewsManager implements ItemListener, MessageLoca
             currentView.getModel().setMessage(message);
         }
     }
-
+    
+    public void setView( HttpPanelComponentViewsManager bodyViews, HttpPanelComponentViewsManager headerViews) {
+        this.requestBody = ((HttpMessage)this.message).getRequestBody().toString();
+        this.requestHeader = ((HttpMessage)this.message).getRequestHeader();
+        HttpPanelViewsOriEdit.bodyViews = bodyViews;
+        HttpPanelViewsOriEdit.headerViews = headerViews;
+    }
     private void enableViews() {
         Iterator<Entry<String, HttpPanelView>> it = views.entrySet().iterator();
         while (it.hasNext()) {
@@ -249,9 +264,12 @@ public class HttpPanelComponentViewsManager implements ItemListener, MessageLoca
 
         synchronized (changingComboBoxLocker) {
             if (changingComboBox) {
+                
                 return;
             }
         }
+        
+
         if (e.getStateChange() == ItemEvent.SELECTED) {
             if (currentView == null) {
                 return;
@@ -264,6 +282,57 @@ public class HttpPanelComponentViewsManager implements ItemListener, MessageLoca
             }
 
             try {
+                System.out.println("MUI<3: "+ item.getConfigName()+" "+(currentView.getModel()));
+               
+                if(item.getConfigName() == "HttpPanelTextViewOriginal") {
+                    // ((HttpMessage)this.message).getRequestBody().setBody(((HttpMessage)this.message).getRequestBody()+"kuykuy"); 
+                    System.out.println( ((HttpMessage)this.message).getRequestBody()+ "      "+  HttpPanelViewsOriEdit.bodyViews.getSelectableViewsComponent().getName());
+                    String[] request = this.requestBody.split("\n<original header>");
+                    System.out.println("request.length: "+request[1]);
+                    if(request.length < 2) {
+                        if(request[0].split("\n<original body>").length>=2){
+                            ((HttpMessage)this.message).getRequestBody().setBody(request[0].split("\n<original body>")[1]);
+                        } else{
+                            ((HttpMessage)this.message).getRequestBody().setBody("");
+                        }
+                    }
+                    else{
+                        if(request[1].split("\n<original body>").length>=2){
+                            ((HttpMessage)this.message).getRequestBody().setBody(request[1].split("\n<original body>")[1]);
+                        } else{
+                            ((HttpMessage)this.message).getRequestBody().setBody("");
+                        }
+                        
+                    }
+
+                    try {
+                        temp = new HttpRequestHeader (request[1].split("\n<original body>")[0]+"");
+                    } catch (HttpMalformedHeaderException e1) {
+                        // TODO Auto-generated catch block
+                        e1.printStackTrace();
+                    } 
+                    ((HttpMessage)this.message).setRequestHeader(temp);
+                    HttpPanelViewsOriEdit.bodyViews.setMessage(this.message);
+                    HttpPanelViewsOriEdit.bodyViews.save();
+                    HttpPanelViewsOriEdit.headerViews.setMessage(this.message);
+                    HttpPanelViewsOriEdit.headerViews.save();
+                } else {
+                    // ((HttpMessage)this.message).getRequestBody().setBody("5555555"); 
+                    // System.out.println( ((HttpMessage)this.message).getRequestBody()+ "      "+  HttpPanelViewsOriEdit.bodyViews.getSelectableViewsComponent().getName());
+                    // System.out.println( ((HttpMessage)this.message).getRequestBody()+ "      "+  HttpPanelViewsOriEdit.bodyViews.getSelectableViewsComponent().getName());
+                    System.out.println("Header: "+ requestHeader.toString() );
+                    String[] request = this.requestBody.split("\n<original header>");
+                    ((HttpMessage)this.message).getRequestBody().setBody(request[0]);
+                    ((HttpMessage)this.message).setRequestHeader(requestHeader);
+                    HttpPanelViewsOriEdit.bodyViews.setMessage(this.message);
+                    HttpPanelViewsOriEdit.bodyViews.save();
+                    HttpPanelViewsOriEdit.headerViews.setMessage(this.message);
+                    HttpPanelViewsOriEdit.headerViews.save();
+                }
+                
+                // ((HttpMessage) message).getRequestBody().setBody("I nah hee: "+ item.getConfigName());
+                // Message hoho = (Message) ((HttpMessage) message);
+                // currentView.getModel().setMessage(hoho);
                 save();
             } catch (InvalidMessageDataException e1) {
                 comboBoxModel.setSelectedItem(viewItems.get(currentView.getName()));

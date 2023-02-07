@@ -61,7 +61,8 @@ public interface HistoryReferencesTableModel<T extends HistoryReferencesTableEnt
         HIGHEST_ALERT,
         NOTE,
         TAGS,
-
+        PARAMS,    //POOH EDIT
+        EDITED, //POOH EDIT
         /**
          * Indicates that the column has custom values and that those values should retrieved by
          * other means.

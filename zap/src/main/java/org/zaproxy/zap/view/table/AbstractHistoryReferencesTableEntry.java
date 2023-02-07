@@ -62,6 +62,8 @@ public abstract class AbstractHistoryReferencesTableEntry implements HistoryRefe
                 AlertRiskTableCellItem.NO_RISK_CELL_ITEM;
         PLACE_HOLDER_VALUES[Column.NOTE.ordinal()] = Boolean.FALSE;
         PLACE_HOLDER_VALUES[Column.TAGS.ordinal()] = EMPTY_STRING;
+        PLACE_HOLDER_VALUES[Column.PARAMS.ordinal()] = EMPTY_STRING;
+        PLACE_HOLDER_VALUES[Column.EDITED.ordinal()] = EMPTY_STRING;
         PLACE_HOLDER_VALUES[Column.CUSTOM.ordinal()] = null;
     }
 
@@ -160,6 +162,13 @@ public abstract class AbstractHistoryReferencesTableEntry implements HistoryRefe
         return EMPTY_STRING;
     }
 
+    public String getHee() {
+        return EMPTY_STRING;
+    }
+
+    public String getEdited() {
+        return EMPTY_STRING;
+    }
     @Override
     public Object getValue(Column column) {
         switch (column) {
@@ -205,6 +214,10 @@ public abstract class AbstractHistoryReferencesTableEntry implements HistoryRefe
                 return this.hasNote();
             case TAGS:
                 return this.getTags();
+            case PARAMS:
+                return this.getHee();   
+            case EDITED:
+                return this.getEdited();       
             case CUSTOM:
                 return null;
             default:
@@ -252,6 +265,10 @@ public abstract class AbstractHistoryReferencesTableEntry implements HistoryRefe
                 return Boolean.FALSE;
             case TAGS:
                 return "Tag1, Tag2, Tag3";
+            case PARAMS:
+                return "HEE";   
+            case EDITED:
+                return "edited"; 
             case CUSTOM:
                 return null;
             default:
@@ -297,6 +314,10 @@ public abstract class AbstractHistoryReferencesTableEntry implements HistoryRefe
                 return Boolean.class;
             case TAGS:
                 return String.class;
+            case PARAMS:
+                return String.class;   
+            case EDITED:
+                return String.class;  
             case CUSTOM:
                 return null;
             default:

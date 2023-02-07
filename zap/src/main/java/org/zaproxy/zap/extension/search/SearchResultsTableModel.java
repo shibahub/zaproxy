@@ -53,6 +53,8 @@ public class SearchResultsTableModel
                 Column.REQUEST_TIMESTAMP,
                 Column.RESPONSE_TIMESTAMP,
                 Column.METHOD,
+                Column.PARAMS,  //POOH EDIT
+                Column.EDITED, //POOH EDIT
                 Column.URL,
                 Column.STATUS_CODE,
                 Column.STATUS_REASON,

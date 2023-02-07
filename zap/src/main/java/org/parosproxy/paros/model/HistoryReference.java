@@ -77,6 +77,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 import org.apache.commons.httpclient.URI;
+import org.apache.commons.httpclient.URIException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.parosproxy.paros.core.scanner.Alert;
@@ -89,9 +90,13 @@ import org.parosproxy.paros.db.TableHistory;
 import org.parosproxy.paros.db.TableTag;
 import org.parosproxy.paros.network.HttpMalformedHeaderException;
 import org.parosproxy.paros.network.HttpMessage;
+import org.parosproxy.paros.network.HttpRequestHeader;
 import org.zaproxy.zap.ZAP;
 import org.zaproxy.zap.eventBus.Event;
 import org.zaproxy.zap.model.Target;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This class abstracts a reference to a http message stored in database. It reads the whole http
@@ -324,6 +329,7 @@ public class HistoryReference {
 
     private HttpMessage httpMessage;
     private HttpMessageCachedData httpMessageCachedData;
+    private String test ="";
 
     /** @return Returns the sessionId. */
     public long getSessionId() {
@@ -374,7 +380,6 @@ public class HistoryReference {
 
     public HistoryReference(Session session, int historyType, HttpMessage msg)
             throws HttpMalformedHeaderException, DatabaseException {
-
         RecordHistory history = null;
         this.icons = new ArrayList<>();
         this.clearIfManual = new ArrayList<>();
@@ -480,7 +485,24 @@ public class HistoryReference {
     public URI getURI() {
         return httpMessageCachedData.getUri();
     }
+    public boolean getParams() {
+        String temp = httpMessageCachedData.getUri()+"";
+        // boolean hasParams = Pattern.matches("[\\W\\w]+[?]+[\\W\\w]+=[\\W\\w]+", temp)? true : false;
+        if(Pattern.matches("[\\W\\w]+[?]+[\\W\\w]+=[\\W\\w]+", temp)) {
+            return true;
+        } 
+        // System.out.println( temp + "  " + hasParams + "  " + this.getSessionId());
+        return  Pattern.matches("[\\W\\w]+=[\\W\\w]+", httpMessageCachedData.getRequestBody());
+        
+        
+        
+    }
 
+    public boolean getEdited() {
+        String temp = httpMessageCachedData.getRequestBody()+"";
+        // System.out.println("Get edited: "+temp);
+        return temp.indexOf("<original header>") !=-1? true: false;
+    }
     @Override
     public String toString() {
 

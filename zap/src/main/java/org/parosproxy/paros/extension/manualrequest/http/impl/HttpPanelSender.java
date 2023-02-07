@@ -119,6 +119,8 @@ public class HttpPanelSender implements org.parosproxy.paros.extension.manualreq
             }
 
             if (followRedirects) {
+                System.out.println("handleSendMessage: content len -> "+ httpMessage.getRequestHeader().toString().getBytes().length);
+                System.out.println("handleSendMessage: content len -> "+ httpMessage.getRequestHeader().getContentLength());
                 delegate.sendAndReceive(
                         httpMessage,
                         HttpRequestConfig.builder()

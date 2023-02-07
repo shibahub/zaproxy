@@ -26,6 +26,8 @@ import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JToggleButton;
+import javax.swing.text.View;
+
 import org.apache.commons.configuration.FileConfiguration;
 import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.model.Model;
@@ -33,13 +35,17 @@ import org.parosproxy.paros.network.HttpMessage;
 import org.zaproxy.zap.extension.httppanel.Message;
 import org.zaproxy.zap.extension.httppanel.component.HttpPanelComponentInterface;
 import org.zaproxy.zap.extension.httppanel.component.HttpPanelComponentViewsManager;
+import org.zaproxy.zap.extension.httppanel.component.HttpPanelViewsOriEdit;
 import org.zaproxy.zap.extension.httppanel.view.HttpPanelDefaultViewSelector;
 import org.zaproxy.zap.extension.httppanel.view.HttpPanelView;
+import org.zaproxy.zap.extension.httppanel.view.hex.HttpPanelHexView;
+import org.zaproxy.zap.extension.httppanel.view.impl.models.http.request.RequestBodyEditedStringHttpPanelViewModel;
 import org.zaproxy.zap.extension.httppanel.view.impl.models.http.request.RequestBodyStringHttpPanelViewModel;
 import org.zaproxy.zap.extension.httppanel.view.impl.models.http.request.RequestHeaderStringHttpPanelViewModel;
 import org.zaproxy.zap.extension.httppanel.view.text.HttpPanelTextView;
 import org.zaproxy.zap.extension.search.SearchMatch;
 import org.zaproxy.zap.extension.search.SearchableHttpPanelComponent;
+import org.zaproxy.zap.model.DefaultTextHttpMessageLocation;
 import org.zaproxy.zap.model.HttpMessageLocation;
 import org.zaproxy.zap.model.MessageLocation;
 import org.zaproxy.zap.utils.DisplayUtils;
@@ -55,7 +61,8 @@ public class RequestSplitComponent<T extends Message>
 
     public enum ViewComponent {
         HEADER,
-        BODY
+        BODY,
+        KUY
     }
 
     private static final String DIVIDER_LOCATION_CONFIG_KEY = "dividerLocation";
@@ -66,6 +73,7 @@ public class RequestSplitComponent<T extends Message>
             Constant.messages.getString("http.panel.component.split.header");
     private static final String BODY_LABEL =
             Constant.messages.getString("http.panel.component.split.body");
+    private static final String ORIGINAL_LABEL = "";
 
     protected JToggleButton buttonShowView;
 
@@ -77,16 +85,32 @@ public class RequestSplitComponent<T extends Message>
     protected boolean isEditable;
 
     protected HttpPanelComponentViewsManager headerViews;
+    protected HttpPanelViewsOriEdit oriEditViews;
     protected HttpPanelComponentViewsManager bodyViews;
+    
 
     private String configurationKey;
-
+    private String keepIt = "";
     public RequestSplitComponent() {
         configurationKey = "";
 
+        headerViews = new HttpPanelComponentViewsManager("split.header", HEADER_LABEL);   
+        bodyViews = new HttpPanelComponentViewsManager("split.body", BODY_LABEL);
+        oriEditViews = new HttpPanelViewsOriEdit("split.header", ORIGINAL_LABEL);
+        
+        
+        initUi();
+    }
+
+    public RequestSplitComponent(String keepIt) {
+        configurationKey = "";
+        System.out.println("Keep IT: "+ keepIt);
+        this.keepIt = keepIt;
         headerViews = new HttpPanelComponentViewsManager("split.header", HEADER_LABEL);
         bodyViews = new HttpPanelComponentViewsManager("split.body", BODY_LABEL);
-
+        oriEditViews = new HttpPanelViewsOriEdit("split.header", ORIGINAL_LABEL);
+        
+        
         initUi();
     }
 
@@ -102,7 +126,16 @@ public class RequestSplitComponent<T extends Message>
         panelOptions = new JPanel();
 
         panelOptions.add(headerViews.getSelectableViewsComponent());
+        
         panelOptions.add(bodyViews.getSelectableViewsComponent());
+
+        if(this.keepIt == "main") {
+            panelOptions.add(oriEditViews.getSelectableViewsComponent());
+        }
+        // panelOptions.add(oriEditViews.getSelectableViewsComponent());
+        // View temp = new View() ''
+       
+        // oriEditViews.addView(view, fileConfiguration);
 
         headerViews.addView(createHttpPanelHeaderTextView());
 
@@ -114,6 +147,7 @@ public class RequestSplitComponent<T extends Message>
 
         splitMain.setTopComponent(headerViews.getViewsPanel());
         splitMain.setBottomComponent(bodyViews.getViewsPanel());
+        
 
         initViews();
 
@@ -157,6 +191,9 @@ public class RequestSplitComponent<T extends Message>
     protected void initViews() {
         bodyViews.addView(
                 new HttpRequestBodyPanelTextView(new RequestBodyStringHttpPanelViewModel()));
+        oriEditViews.addView(
+                new HttpRequestOriginalTextView(new RequestBodyStringHttpPanelViewModel()));
+        
     }
 
     @Override
@@ -180,12 +217,93 @@ public class RequestSplitComponent<T extends Message>
 
     @Override
     public void setMessage(Message aMessage) {
+        
         this.httpMessage = (HttpMessage) aMessage;
-
+        
         headerViews.setMessage(httpMessage);
+        
+        oriEditViews.removeView("HttpPanelTextViewEdited");
+        
+
+        if(httpMessage!=null){
+            
+            String[] sepReq;
+            System.out.println(( httpMessage).getRequestBody().toString().indexOf("<original header>"));
+            if((httpMessage).getRequestBody().toString().indexOf("<original header>")!= -1){
+                oriEditViews.removeView("HttpPanelTextViewOriginal");
+                sepReq = ( httpMessage).getRequestBody().toString().split("\n<original header>");
+               
+                HttpMessage temp = httpMessage.cloneRequest();
+                ( httpMessage).setRequestBody(sepReq[0]);
+                
+                
+
+                oriEditViews.addView(
+                new HttpRequestOriginalTextView(new RequestBodyStringHttpPanelViewModel()));
+                oriEditViews.addView(
+                new HttpRequestEditedTextView(new RequestBodyEditedStringHttpPanelViewModel()));
+                oriEditViews.setSelectedView("HttpPanelTextViewEdited");
+                oriEditViews.setMessage(temp);
+                oriEditViews.setView(bodyViews, headerViews);
+                
+                // if(this.keepIt == "main"){
+                //     String allEditedRequest = httpMessage.getRequestHeader().toString() ;//+ httpMessage.getRequestBody().toString();
+                //     String allOriginalRequest = sepReq[1].split("\n<original body>")[0] ;//+ sepReq[1].split("\n<original body>")[1];
+                //     // int count = 0;
+                //     // for ( int i = 0 ; i < allOriginalRequest.length(); i++ ) {
+                        
+                //     //     if( allOriginalRequest.charAt(i) != allEditedRequest.charAt(i) ){
+                //     //         System.out.println(i+" "+allOriginalRequest.charAt(i)+ " " +allEditedRequest.charAt(i));
+                //     //         MessageLocation muiim = new DefaultTextHttpMessageLocation(
+                //     //             HttpMessageLocation.Location.REQUEST_HEADER, count, count+1, "");
+                //     //         headerViews.highlight(muiim);
+                //     //         allEditedRequest = removeSubstring(allEditedRequest, i, i+1);
+                //     //         // System.out.println("removeSubstring: \n"+ allEditedRequest);
+                //     //         i= i-1;
+                //     //     }
+                //     //     count = count+1;
+                //     // }
+                //     String difference = getDifferences(allEditedRequest, allOriginalRequest);
+                //     System.out.println("Difference: " + difference);
+                   
+                // }
+               
+                
+                
+            }
+        }
+       
         bodyViews.setMessage(httpMessage);
     }
+    // static String removeSubstring(String text, int startIndex, int endIndex) {
+    //     if (endIndex < startIndex) {
+    //         startIndex = endIndex;
+    //     }
 
+    //     String a = text.substring(0, startIndex);
+    //     String b = text.substring(endIndex);
+ 
+    //     return a + b;
+    // }
+    // public static String getDifferences(String str1, String str2) {
+    //     StringBuilder sb = new StringBuilder();
+    //     int len1 = str1.length();
+    //     int len2 = str2.length();
+    //     int len = Math.min(len1, len2);
+    //     for (int i = 0; i < len; i++) {
+    //         char c1 = str1.charAt(i);
+    //         char c2 = str2.charAt(i);
+    //         if (c1 != c2) {
+    //             sb.append(c2);
+    //         }
+    //     }
+    //     if (len1 > len) {
+    //         sb.append(str1.substring(len));
+    //     } else if (len2 > len) {
+    //         sb.append(str2.substring(len));
+    //     }
+    //     return sb.toString();
+    // }
     @Override
     public void save() {
         if (httpMessage == null) {
@@ -201,9 +319,11 @@ public class RequestSplitComponent<T extends Message>
         if (options != null) {
             if (ViewComponent.HEADER.equals(options)) {
                 headerViews.addView(view, fileConfiguration);
+                System.out.println("ViewName: "+ view.getName());
             } else if (ViewComponent.BODY.equals(options)) {
                 bodyViews.addView(view, fileConfiguration);
-            }
+                // oriEditViews.addView(view, fileConfiguration);
+            } 
         }
     }
 
@@ -214,6 +334,8 @@ public class RequestSplitComponent<T extends Message>
                 headerViews.removeView(viewName);
             } else if (ViewComponent.BODY.equals(options)) {
                 bodyViews.removeView(viewName);
+            } else if (viewName.equals(options)) {
+                oriEditViews.removeView(viewName);
             }
         }
     }
@@ -236,7 +358,9 @@ public class RequestSplitComponent<T extends Message>
     @Override
     public void setEnableViewSelect(boolean enableViewSelect) {
         headerViews.setEnableViewSelect(enableViewSelect);
+        oriEditViews.setEnableViewSelect(enableViewSelect);
         bodyViews.setEnableViewSelect(enableViewSelect);
+        
     }
 
     @Override
@@ -247,7 +371,10 @@ public class RequestSplitComponent<T extends Message>
                 headerViews.addDefaultViewSelector(defaultViewSelector);
             } else if (ViewComponent.BODY.equals(options)) {
                 bodyViews.addDefaultViewSelector(defaultViewSelector);
+            } else if (ViewComponent.KUY.equals(options)) {
+                oriEditViews.addDefaultViewSelector(defaultViewSelector);
             }
+            
         }
     }
 
@@ -258,6 +385,8 @@ public class RequestSplitComponent<T extends Message>
                 headerViews.removeDefaultViewSelector(defaultViewSelectorName);
             } else if (ViewComponent.BODY.equals(options)) {
                 bodyViews.removeDefaultViewSelector(defaultViewSelectorName);
+            } else if (ViewComponent.KUY.equals(options)) {
+                oriEditViews.removeDefaultViewSelector(defaultViewSelectorName);
             }
         }
     }
@@ -266,7 +395,9 @@ public class RequestSplitComponent<T extends Message>
     public void setParentConfigurationKey(String configurationKey) {
         this.configurationKey = configurationKey;
         headerViews.setConfigurationKey(configurationKey);
+        oriEditViews.setConfigurationKey(configurationKey);
         bodyViews.setConfigurationKey(configurationKey);
+        
     }
 
     @Override
@@ -278,7 +409,9 @@ public class RequestSplitComponent<T extends Message>
                         .getInt(configurationKey + DIVIDER_LOCATION_CONFIG_KEY, -1));
 
         headerViews.loadConfig(fileConfiguration);
+        oriEditViews.loadConfig(fileConfiguration);
         bodyViews.loadConfig(fileConfiguration);
+        
     }
 
     @Override
@@ -291,7 +424,9 @@ public class RequestSplitComponent<T extends Message>
                         splitMain.getDividerLocation());
 
         headerViews.saveConfig(fileConfiguration);
+        oriEditViews.saveConfig(fileConfiguration);
         bodyViews.saveConfig(fileConfiguration);
+        
     }
 
     @Override
@@ -300,7 +435,9 @@ public class RequestSplitComponent<T extends Message>
             isEditable = editable;
 
             headerViews.setEditable(editable);
+            oriEditViews.setEditable(editable);
             bodyViews.setEditable(editable);
+            
         }
     }
 
@@ -417,7 +554,6 @@ public class RequestSplitComponent<T extends Message>
         if (selectedView != null) {
             return selectedView;
         }
-
-        return bodyViews.setSelectedView(viewName);
+        return headerViews.setSelectedView(viewName);
     }
 }

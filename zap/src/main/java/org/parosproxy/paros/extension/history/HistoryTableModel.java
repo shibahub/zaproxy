@@ -34,6 +34,8 @@ class HistoryTableModel extends DefaultHistoryReferencesTableModel {
                     Column.HREF_TYPE_INFO,
                     Column.REQUEST_TIMESTAMP,
                     Column.RESPONSE_TIMESTAMP,
+                    Column.PARAMS,    //POOH EDIT
+                    Column.EDITED,    //POOH EDIT
                     Column.METHOD,
                     Column.URL,
                     Column.HOSTNAME,
@@ -47,7 +49,8 @@ class HistoryTableModel extends DefaultHistoryReferencesTableModel {
                     Column.SIZE_RESPONSE_BODY,
                     Column.HIGHEST_ALERT,
                     Column.NOTE,
-                    Column.TAGS
+                    Column.TAGS,
+                    
                 });
     }
 }

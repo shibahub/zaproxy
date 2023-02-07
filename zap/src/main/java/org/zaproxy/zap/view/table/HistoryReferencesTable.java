@@ -172,14 +172,14 @@ public class HistoryReferencesTable extends ZapTable {
         return hrefList;
     }
 
-    protected HistoryReference getHistoryReferenceAtViewRow(final int row) {
+    protected HistoryReference getHistoryReferenceAtViewRow(final int row) { 
         HistoryReferencesTableEntry entry = getModel().getEntry(convertRowIndexToModel(row));
         if (entry != null) {
             return entry.getHistoryReference();
         }
         return null;
     }
-
+    
     /**
      * {@inheritDoc}
      *

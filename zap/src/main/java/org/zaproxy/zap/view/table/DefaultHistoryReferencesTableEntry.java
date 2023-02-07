@@ -62,6 +62,8 @@ public class DefaultHistoryReferencesTableEntry extends AbstractHistoryReference
     private final boolean noteColumn;
     private String tags;
     private final boolean tagsColumn;
+    private final boolean hasParams;
+    private final boolean hasEdited;
 
     public DefaultHistoryReferencesTableEntry(HistoryReference historyReference, Column[] columns) {
         super(historyReference);
@@ -125,13 +127,22 @@ public class DefaultHistoryReferencesTableEntry extends AbstractHistoryReference
                 hasColumn(sortedColumns, Column.SIZE_RESPONSE_BODY)
                         ? historyReference.getResponseBodyLength()
                         : null;
+        hasParams =
+                hasColumn(sortedColumns, Column.PARAMS)
+                                ? historyReference.getParams()
+                                : false;
+        hasEdited =
+                hasColumn(sortedColumns, Column.EDITED)
+                                ? historyReference.getEdited()
+                                : false;
         messageSize =
                 extractMessageSize(historyReference, hasColumn(sortedColumns, Column.SIZE_MESSAGE));
 
         highestAlertColumn = hasColumn(sortedColumns, Column.HIGHEST_ALERT);
         noteColumn = hasColumn(sortedColumns, Column.NOTE);
         tagsColumn = hasColumn(sortedColumns, Column.TAGS);
-
+        
+        
         alertRiskCellItem = super.getHighestAlert();
 
         refreshCachedValues();
@@ -266,6 +277,20 @@ public class DefaultHistoryReferencesTableEntry extends AbstractHistoryReference
         return tags;
     }
 
+    @Override
+    public String getHee() {
+        if(hasParams)
+        return "           ✓";
+        return " ";
+        // return "hee";
+    }
+
+    @Override
+    public String getEdited() {
+        if(hasEdited)
+        return "           ✓";
+        return " ";
+    }
     /**
      * Refresh the cached values of {@code HistoryReference}'s mutable fields.
      *
